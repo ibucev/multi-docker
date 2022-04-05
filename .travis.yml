@@ -1,0 +1,23 @@
+sudo: required
+
+services: 
+  - docker
+
+before_install:
+  - docker build -t ibucev/react-test -f ./client/Dockerfile.dev ./client/
+
+script:
+  - docker run -e CI=true ibucev/react-test npm test -- --coverage
+
+after_success: 
+  - docker build -t ibucev/multi-client ./client
+  - docker build -t ibucev/multi-nginx ./nginx
+  - docker build -t ibucev/multi-server ./server
+  - docker build -t ibucev/multi-worker ./worker
+
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  - docker push ibucev/multi-client
+  - docker push ibucev/multi-nginx
+  - docker push ibucev/multi-server
+  - docker push ibucev/multi-worker
+
